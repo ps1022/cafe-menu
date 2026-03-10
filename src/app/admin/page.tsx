@@ -271,10 +271,13 @@ function parseVoiceText(text: string, liveCategories?: string[]): VoiceCommand {
     if (price !== null) return { type: "price", name: priceMatch[1].trim(), price };
   }
 
-  // "추가 커피 디카페인 4.0" or "커피 디카페인 4.0 추가"
+  // "추가 커피 디카페인 4.0" or "커피 디카페인 4.0 추가/추가해줘/추가해/등록해줘"
   const addMatch =
     t.match(/(?:추가|등록|넣어)\s+(.+)$/) ||
-    (t.includes(" 추가") ? t.replace(/\s+추가$/, "") : null);
+    (() => {
+      const stripped = t.replace(/\s+(?:추가|등록|넣어)(?:줘|주세요|해줘|해)?\s*$/, "");
+      return stripped !== t ? stripped : null;
+    })();
   if (addMatch) {
     const rest = (typeof addMatch === "string" ? addMatch : addMatch[1]).trim();
     const numMatch = rest.match(/\s+(\d+(?:\.\d+)?(?:\s*천)?|[가-힣]+)\s*$/);
