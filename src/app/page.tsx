@@ -50,14 +50,16 @@ export default async function MenuPage() {
               <ul className="menu-list">
                 {category.items.map((item) => (
                   <li key={item.id} className="menu-item">
-                    <span className="menu-item-name">
-                      {item.tag && (
+                    {item.tag ? (
+                      <span className="menu-item-tag-slot">
                         <span className={item.tag === "베스트" ? "item-tag item-tag-best" : "item-tag item-tag-sig"}>
                           {item.tag === "베스트" ? "BEST" : "SIGNATURE"}
                         </span>
-                      )}
-                      {item.name}
-                    </span>
+                      </span>
+                    ) : (
+                      <span className="menu-item-tag-slot" />
+                    )}
+                    <span className="menu-item-name">{item.name}</span>
                     <span className="menu-item-dots" />
                     <span className="menu-item-price">
                       {item.has_ice ? (

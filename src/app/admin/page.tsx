@@ -885,7 +885,7 @@ export default function AdminPage() {
                 {displayItems.map((item) => {
                   return (
                     <li key={item.id} className="menu-item">
-                      <span className="menu-item-name">
+                      <span className="menu-item-tag-slot">
                         {item.tag ? (
                           <button
                             type="button"
@@ -903,8 +903,8 @@ export default function AdminPage() {
                             title="클릭하여 태그 추가"
                           />
                         )}
-                        {item.name}
                       </span>
+                      <span className="menu-item-name">{item.name}</span>
                       <span className="menu-item-dots" />
                       <span className="menu-item-price">
                         {item.has_ice ? (
