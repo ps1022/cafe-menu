@@ -11,9 +11,10 @@ type SortMode = "manual" | "price" | "name";
 
 type VoiceCommand = 
   | { type: "delete"; name: string }
-  | { type: "add"; category: string; name: string; price: number }
+  | { type: "add"; category: string; name: string; price: number; has_ice?: boolean }
   | { type: "addNoPrice"; category: string; name: string }
   | { type: "price"; name: string; price: number }
+  | { type: "ice"; name: string; has_ice: boolean }
   | { type: "rename"; from: string; to: string }
   | { type: "bulkPrice"; scope: "all" | "category"; category?: string; price: number }
   | { type: "setSort"; mode: SortMode }
@@ -518,7 +519,17 @@ export default function AdminPage() {
           }
           const { error } = await supabase.from("menu_items").update({ price: cmd.price }).eq("id", item.id);
           if (error) throw error;
-          showMsg("ok", `'${item.name}' 가격 ${cmd.price}원으로 변경`);
+          showMsg("ok", `'${item.name}' 가격 ${cmd.price}천원으로 변경`);
+          await fetchMenu();
+        } else if (cmd.type === "ice") {
+          const item = findBestItem(cmd.name);
+          if (!item) {
+            showMsg("error", `'${cmd.name}' 메뉴를 찾을 수 없습니다.`);
+            return;
+          }
+          const { error } = await supabase.from("menu_items").update({ has_ice: cmd.has_ice }).eq("id", item.id);
+          if (error) throw error;
+          showMsg("ok", `'${item.name}' 아이스 옵션 ${cmd.has_ice ? "추가" : "제거"}됨`);
           await fetchMenu();
         } else if (cmd.type === "saveSort") {
           if (cmd.scope === "all") {
@@ -619,21 +630,20 @@ export default function AdminPage() {
           }
           const existing = cat.items.find((i) => normalizeMenuName(i.name) === normalizeMenuName(cmd.name));
           if (existing) {
-            // 이미 있으면 가격 업데이트
-            const { error } = await supabase.from("menu_items").update({ price: cmd.price }).eq("id", existing.id);
+            const { error } = await supabase.from("menu_items").update({ price: cmd.price, ...(cmd.has_ice !== undefined ? { has_ice: cmd.has_ice } : {}) }).eq("id", existing.id);
             if (error) throw error;
             showMsg("ok", `'${cmd.name}' 가격 업데이트됨 (${cmd.category})`);
           } else {
-            // 없으면 추가
             const maxOrder = Math.max(0, ...cat.items.map((i) => i.sort_order));
             const { error } = await supabase.from("menu_items").insert({
               category_id: cat.id,
               name: cmd.name,
               price: cmd.price,
+              has_ice: cmd.has_ice ?? false,
               sort_order: maxOrder + 1,
             });
             if (error) throw error;
-            showMsg("ok", `'${cmd.name}' 추가됨 (${cmd.category})`);
+            showMsg("ok", `'${cmd.name}' 추가됨 (${cmd.category})${cmd.has_ice ? " [아이스 가능]" : ""}`);
           }
           await fetchMenu();
         } else if (cmd.type === "addNoPrice") {

@@ -9,13 +9,15 @@ const SYSTEM_PROMPT = `당신은 카페 메뉴 관리 앱의 음성 명령을 �
 - 가격은 반드시 천원 단위 소수점 숫자로 반환하세요. (4500원 → 4.5, 5000원 → 5, 3000원 → 3)
 - 메뉴 이름은 현재 메뉴 목록에 있는 것과 최대한 가깝게 매칭하세요.
 - 카테고리명은 현재 카테고리 목록에서 가장 유사한 것을 사용하세요.
+- has_ice는 아이스 옵션 여부입니다. 아이스 메뉴는 hot 가격 + 0.5천원이 자동 표시됩니다.
 - 명령을 이해할 수 없으면 null을 반환하세요.
 - JSON만 반환하고 다른 텍스트는 절대 포함하지 마세요.
 
 지원 명령 형식:
 {"type":"delete","name":"메뉴이름"}
-{"type":"add","category":"카테고리명","name":"메뉴이름","price":숫자}
+{"type":"add","category":"카테고리명","name":"메뉴이름","price":숫자,"has_ice":true또는false}
 {"type":"price","name":"메뉴이름","price":숫자}
+{"type":"ice","name":"메뉴이름","has_ice":true또는false}
 {"type":"rename","from":"기존이름","to":"새이름"}
 {"type":"bulkPrice","scope":"all","price":숫자}
 {"type":"bulkPrice","scope":"category","category":"카테고리명","price":숫자}

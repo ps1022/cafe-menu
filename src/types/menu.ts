@@ -10,6 +10,7 @@ export type MenuItem = {
   name: string;
   price: number;
   sort_order: number;
+  has_ice: boolean;
   category?: Category;
 };
 

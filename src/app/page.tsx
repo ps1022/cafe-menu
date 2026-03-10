@@ -19,8 +19,14 @@ async function getMenu(): Promise<CategoryWithItems[]> {
 
   return (categories || []).map((cat) => ({
     ...cat,
-    items: (items || []).filter((i) => i.category_id === cat.id),
+    items: (items || [])
+      .filter((i) => i.category_id === cat.id)
+      .sort((a, b) => Number(a.price) - Number(b.price) || a.name.localeCompare(b.name, "ko-KR")),
   }));
+}
+
+function formatPrice(price: number) {
+  return `${price.toFixed(1)}천`;
 }
 
 export default async function MenuPage() {
@@ -37,20 +43,32 @@ export default async function MenuPage() {
           메뉴가 없습니다. Supabase에서 SQL을 실행했는지 확인해 주세요.
         </p>
       ) : (
-        menu.map((category) => (
-          <section key={category.id} className="menu-card">
-            <h2 className="category-title">{category.name}</h2>
-            <ul className="menu-list">
-              {category.items.map((item) => (
-                <li key={item.id} className="menu-item">
-                  <span className="menu-item-name">{item.name}</span>
-                  <span className="menu-item-dots" />
-                  <span className="menu-item-price">{Number(item.price).toFixed(1)}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))
+        <div className="menu-grid">
+          {menu.map((category) => (
+            <section key={category.id} className="menu-card">
+              <h2 className="category-title">{category.name}</h2>
+              <ul className="menu-list">
+                {category.items.map((item) => (
+                  <li key={item.id} className="menu-item">
+                    <span className="menu-item-name">{item.name}</span>
+                    <span className="menu-item-dots" />
+                    <span className="menu-item-price">
+                      {item.has_ice ? (
+                        <>
+                          <span className="price-hot">H {formatPrice(Number(item.price))}</span>
+                          <span className="price-sep"> / </span>
+                          <span className="price-ice">I {formatPrice(Number(item.price) + 0.5)}</span>
+                        </>
+                      ) : (
+                        formatPrice(Number(item.price))
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
       <div className="footer-deco">♥ &nbsp; THANK YOU &nbsp; ♥</div>
       <Link href="/admin" className="admin-link">
