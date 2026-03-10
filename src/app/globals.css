@@ -1,18 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 
 :root {
-  --bg: #fff8f9;
-  --bg-pattern: #fdeef2;
-  --card: #ffffff;
-  --text: #3d2c2c;
-  --muted: #9e7e80;
-  --accent: #d4607a;
-  --accent-soft: #f7c5d0;
-  --accent-light: #fde8ed;
-  --green: #7faa72;
-  --green-light: #e8f5e4;
-  --border: #f4dde2;
-  --shadow: rgba(212, 96, 122, 0.12);
+  --bg: #f7f3ee;
+  --card: #faf7f3;
+  --text: #1a1612;
+  --muted: #7a6f65;
+  --accent: #1a1612;
+  --gold: #b8966e;
+  --gold-light: #e8d8c4;
+  --border: #d8cfc4;
+  --border-strong: #1a1612;
 }
 
 * {
@@ -20,164 +17,165 @@
 }
 
 body {
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(circle at 15% 20%, rgba(252, 210, 220, 0.35) 0%, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(191, 220, 180, 0.3) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(253, 232, 237, 0.2) 0%, transparent 60%);
+  background: var(--bg);
   color: var(--text);
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
-  line-height: 1.6;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
   margin: 0;
   min-height: 100vh;
 }
 
 a {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: none;
 }
 
-/* 벚꽃 장식 */
+.container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+/* 헤더 */
 .page-header {
   text-align: center;
-  padding: 2rem 0 1rem;
+  padding: 1rem 0 2.5rem;
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: 2.5rem;
   position: relative;
 }
 
 .page-header::before {
-  content: '🌸';
-  font-size: 1.8rem;
+  content: '— ✦ —';
   display: block;
-  margin-bottom: 0.4rem;
-  animation: float 3s ease-in-out infinite;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  margin-bottom: 0.8rem;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+.page-title {
+  font-family: 'Playfair Display', 'Noto Serif KR', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.4rem;
+  color: var(--text);
+  line-height: 1.2;
 }
 
-.container {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 1.5rem;
+.page-subtitle {
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: var(--muted);
+  margin: 0;
+  text-transform: uppercase;
 }
 
+/* 카드 */
 .menu-card {
-  background: var(--card);
-  border-radius: 20px;
-  box-shadow: 0 4px 20px var(--shadow), 0 1px 4px rgba(0,0,0,0.04);
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.menu-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px var(--shadow);
+  background: transparent;
+  margin-bottom: 2.5rem;
 }
 
 .category-title {
-  background: linear-gradient(135deg, var(--accent) 0%, #e8809a 100%);
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 600;
-  font-family: 'Noto Serif KR', serif;
-  padding: 0.8rem 1.2rem;
-  letter-spacing: 0.03em;
+  font-family: 'Playfair Display', 'Noto Serif KR', serif;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 0 0.7rem;
+  border-bottom: 1px solid var(--border-strong);
+  margin-bottom: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.8rem;
 }
 
 .category-title::before {
-  content: '🌷';
-  font-size: 1rem;
+  content: none;
+}
+
+.category-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
 .menu-list {
   list-style: none;
   margin: 0;
-  padding: 0.3rem 0;
+  padding: 0;
 }
 
 .menu-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 0.9rem 1.2rem;
+  align-items: baseline;
+  padding: 0.9rem 0;
   border-bottom: 1px solid var(--border);
-  transition: background 0.15s ease;
+  gap: 1rem;
 }
 
 .menu-item:last-child {
   border-bottom: none;
 }
 
-.menu-item:hover {
-  background: var(--accent-light);
+.menu-item-name {
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 400;
+  font-size: 0.95rem;
+  color: var(--text);
+  letter-spacing: 0.02em;
 }
 
-.menu-item-name {
-  font-weight: 500;
-  color: var(--text);
-  font-size: 0.97rem;
+.menu-item-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--border);
+  margin: 0 0.5rem 0.25rem;
+  min-width: 20px;
 }
 
 .menu-item-price {
-  color: var(--accent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.95rem;
-  background: var(--accent-light);
-  padding: 0.2rem 0.6rem;
-  border-radius: 20px;
-}
-
-.page-title {
-  font-size: 1.7rem;
-  font-weight: 700;
-  font-family: 'Noto Serif KR', serif;
-  margin: 0 0 0.3rem;
-  text-align: center;
-  color: var(--accent);
-  letter-spacing: -0.01em;
-}
-
-.page-subtitle {
-  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  font-weight: 400;
   color: var(--muted);
-  font-size: 0.85rem;
-  margin-bottom: 1.8rem;
-  letter-spacing: 0.05em;
+  white-space: nowrap;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.footer-deco {
+  text-align: center;
+  padding: 2rem 0 1.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  border-top: 2px solid var(--border-strong);
+  margin-top: 1rem;
 }
 
 .admin-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  margin-top: 1rem;
-  font-size: 0.85rem;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
   color: var(--muted);
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
   border: 1px solid var(--border);
-  background: var(--card);
+  padding: 0.4rem 1rem;
   transition: all 0.2s ease;
 }
 
 .admin-link:hover {
-  color: var(--accent);
-  border-color: var(--accent-soft);
-  background: var(--accent-light);
-}
-
-.footer-deco {
-  text-align: center;
-  padding: 1.5rem 0 2rem;
-  font-size: 1.2rem;
-  letter-spacing: 0.3em;
-  opacity: 0.5;
+  color: var(--text);
+  border-color: var(--text);
+  background: var(--gold-light);
 }
 

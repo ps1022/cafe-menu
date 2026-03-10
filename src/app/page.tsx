@@ -30,7 +30,7 @@ export default async function MenuPage() {
     <main className="container">
       <div className="page-header">
         <h1 className="page-title">봄날의 카페</h1>
-        <p className="page-subtitle">✦ S P R I N G &nbsp; M E N U ✦</p>
+        <p className="page-subtitle">Spring Cafe &nbsp;&bull;&nbsp; Menu</p>
       </div>
       {menu.length === 0 ? (
         <p style={{ textAlign: "center", color: "var(--muted)" }}>
@@ -44,6 +44,7 @@ export default async function MenuPage() {
               {category.items.map((item) => (
                 <li key={item.id} className="menu-item">
                   <span className="menu-item-name">{item.name}</span>
+                  <span className="menu-item-dots" />
                   <span className="menu-item-price">{Number(item.price).toFixed(1)}</span>
                 </li>
               ))}
@@ -51,7 +52,7 @@ export default async function MenuPage() {
           </section>
         ))
       )}
-      <div className="footer-deco">🌸 🌿 🌸</div>
+      <div className="footer-deco">♥ &nbsp; THANK YOU &nbsp; ♥</div>
       <Link href="/admin" className="admin-link">
         ⚙ 관리자
       </Link>
