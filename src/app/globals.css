@@ -1,10 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap');
+
 :root {
-  --bg: #faf8f5;
-  --card: #fff;
-  --text: #2c2c2c;
-  --muted: #6b6b6b;
-  --accent: #8b6914;
-  --border: #e8e4de;
+  --bg: #fff8f9;
+  --bg-pattern: #fdeef2;
+  --card: #ffffff;
+  --text: #3d2c2c;
+  --muted: #9e7e80;
+  --accent: #d4607a;
+  --accent-soft: #f7c5d0;
+  --accent-light: #fde8ed;
+  --green: #7faa72;
+  --green-light: #e8f5e4;
+  --border: #f4dde2;
+  --shadow: rgba(212, 96, 122, 0.12);
 }
 
 * {
@@ -12,16 +20,41 @@
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(252, 210, 220, 0.35) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(191, 220, 180, 0.3) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(253, 232, 237, 0.2) 0%, transparent 60%);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  line-height: 1.6;
   margin: 0;
   min-height: 100vh;
 }
 
 a {
   color: var(--accent);
+  text-decoration: none;
+}
+
+/* 벚꽃 장식 */
+.page-header {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  position: relative;
+}
+
+.page-header::before {
+  content: '🌸';
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 0.4rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
 }
 
 .container {
@@ -32,57 +65,119 @@ a {
 
 .menu-card {
   background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px var(--shadow), 0 1px 4px rgba(0,0,0,0.04);
   margin-bottom: 1.5rem;
   overflow: hidden;
+  border: 1px solid var(--border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px var(--shadow);
 }
 
 .category-title {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, #e8809a 100%);
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.75rem 1rem;
+  font-family: 'Noto Serif KR', serif;
+  padding: 0.8rem 1.2rem;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.category-title::before {
+  content: '🌷';
+  font-size: 1rem;
 }
 
 .menu-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.3rem 0;
 }
 
 .menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.85rem 1rem;
+  padding: 0.9rem 1.2rem;
   border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
 }
 
 .menu-item:last-child {
   border-bottom: none;
 }
 
+.menu-item:hover {
+  background: var(--accent-light);
+}
+
 .menu-item-name {
   font-weight: 500;
+  color: var(--text);
+  font-size: 0.97rem;
 }
 
 .menu-item-price {
-  color: var(--muted);
+  color: var(--accent);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
 }
 
 .page-title {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   font-weight: 700;
-  margin: 0 0 1.5rem;
+  font-family: 'Noto Serif KR', serif;
+  margin: 0 0 0.3rem;
   text-align: center;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.05em;
 }
 
 .admin-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   margin-top: 1rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--muted);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: all 0.2s ease;
 }
+
+.admin-link:hover {
+  color: var(--accent);
+  border-color: var(--accent-soft);
+  background: var(--accent-light);
+}
+
+.footer-deco {
+  text-align: center;
+  padding: 1.5rem 0 2rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.3em;
+  opacity: 0.5;
+}
+

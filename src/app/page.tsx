@@ -28,7 +28,10 @@ export default async function MenuPage() {
 
   return (
     <main className="container">
-      <h1 className="page-title">메뉴판</h1>
+      <div className="page-header">
+        <h1 className="page-title">봄날의 카페</h1>
+        <p className="page-subtitle">✦ S P R I N G &nbsp; M E N U ✦</p>
+      </div>
       {menu.length === 0 ? (
         <p style={{ textAlign: "center", color: "var(--muted)" }}>
           메뉴가 없습니다. Supabase에서 SQL을 실행했는지 확인해 주세요.
@@ -48,8 +51,9 @@ export default async function MenuPage() {
           </section>
         ))
       )}
+      <div className="footer-deco">🌸 🌿 🌸</div>
       <Link href="/admin" className="admin-link">
-        관리자 →
+        ⚙ 관리자
       </Link>
     </main>
   );
