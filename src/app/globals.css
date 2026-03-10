@@ -196,3 +196,67 @@ a {
   background: var(--gold-light);
 }
 
+/* ── 태그 배지 ── */
+.item-tag {
+  display: inline-block;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.55rem;
+  border-radius: 100px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.item-tag-best {
+  background: #1a1612;
+  color: #f7f3ee;
+  border: none;
+}
+
+.item-tag-sig {
+  background: transparent;
+  color: #1a1612;
+  border: 1.5px solid #1a1612;
+}
+
+/* 관리자 - 태그 없을 때 빈 토글 버튼 */
+.tag-toggle-empty {
+  display: inline-block;
+  width: 1.4rem;
+  height: 1rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 100px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  cursor: pointer;
+  background: transparent;
+  font-size: 0;
+  padding: 0;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.tag-toggle-empty:hover {
+  border-color: #1a1612;
+  border-style: solid;
+}
+
+.item-tag-btn {
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  background: transparent;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.item-tag-btn:hover {
+  opacity: 0.65;
+}
+

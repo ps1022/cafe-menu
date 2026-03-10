@@ -478,6 +478,20 @@ export default function AdminPage() {
     [menu, fetchMenu, showMsg]
   );
 
+  const toggleTag = useCallback(
+    async (itemId: string, currentTag: string | null | undefined) => {
+      const nextTag = !currentTag ? "베스트" : currentTag === "베스트" ? "시그니처" : null;
+      const supabase = createClient();
+      const { error } = await supabase.from("menu_items").update({ tag: nextTag }).eq("id", itemId);
+      if (error) {
+        showMsg("error", `태그 변경 실패: ${error.message}`);
+        return;
+      }
+      await fetchMenu();
+    },
+    [fetchMenu, showMsg]
+  );
+
   useEffect(() => {
     fetchMenu().finally(() => setLoading(false));
   }, [fetchMenu]);
@@ -835,7 +849,26 @@ export default function AdminPage() {
                 {displayItems.map((item) => {
                   return (
                     <li key={item.id} className="menu-item">
-                      <span className="menu-item-name">{item.name}</span>
+                      <span className="menu-item-name">
+                        {item.tag ? (
+                          <button
+                            type="button"
+                            className={`item-tag item-tag-btn ${item.tag === "베스트" ? "item-tag-best" : "item-tag-sig"}`}
+                            onClick={() => toggleTag(item.id, item.tag)}
+                            title="클릭: BEST → SIGNATURE → 없음"
+                          >
+                            {item.tag === "베스트" ? "BEST" : "SIGNATURE"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="tag-toggle-empty"
+                            onClick={() => toggleTag(item.id, item.tag)}
+                            title="클릭하여 태그 추가"
+                          />
+                        )}
+                        {item.name}
+                      </span>
                       <span className="menu-item-dots" />
                       <span className="menu-item-price">
                         {item.has_ice ? (

@@ -11,6 +11,7 @@ export type MenuItem = {
   price: number;
   sort_order: number;
   has_ice: boolean;
+  tag?: "베스트" | "시그니처" | null;
   category?: Category;
 };
 
