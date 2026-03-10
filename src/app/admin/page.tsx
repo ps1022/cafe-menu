@@ -635,20 +635,26 @@ export default function AdminPage() {
             showMsg("error", `'${cmd.category}' 카테고리를 찾을 수 없습니다.`);
             return;
           }
+          // has_ice 컬럼 존재 여부 자동 감지 (마이그레이션 미실행 대비)
+          const allItems = menu.flatMap((c) => c.items);
+          const hasIceCol = allItems.length > 0 && "has_ice" in allItems[0];
           const existing = cat.items.find((i) => normalizeMenuName(i.name) === normalizeMenuName(cmd.name));
           if (existing) {
-            const { error } = await supabase.from("menu_items").update({ price: cmd.price, ...(cmd.has_ice !== undefined ? { has_ice: cmd.has_ice } : {}) }).eq("id", existing.id);
+            const updateData: Record<string, unknown> = { price: cmd.price };
+            if (hasIceCol && cmd.has_ice !== undefined) updateData.has_ice = cmd.has_ice;
+            const { error } = await supabase.from("menu_items").update(updateData).eq("id", existing.id);
             if (error) throw error;
             showMsg("ok", `'${cmd.name}' 가격 업데이트됨 (${cmd.category})`);
           } else {
             const maxOrder = Math.max(0, ...cat.items.map((i) => i.sort_order));
-            const { error } = await supabase.from("menu_items").insert({
+            const insertData: Record<string, unknown> = {
               category_id: cat.id,
               name: cmd.name,
               price: cmd.price,
-              has_ice: cmd.has_ice ?? false,
               sort_order: maxOrder + 1,
-            });
+            };
+            if (hasIceCol) insertData.has_ice = cmd.has_ice ?? false;
+            const { error } = await supabase.from("menu_items").insert(insertData);
             if (error) throw error;
             showMsg("ok", `'${cmd.name}' 추가됨 (${cmd.category})${cmd.has_ice ? " [아이스 가능]" : ""}`);
           }
