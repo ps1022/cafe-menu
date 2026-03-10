@@ -470,16 +470,28 @@ export default function AdminPage() {
 
       const findBestItem = (query: string) => {
         const q = normalizeMenuName(query);
-        let best: { id: string; name: string; score: number } | null = null;
-        for (const item of menu.flatMap((c) => c.items)) {
+        const allItems = menu.flatMap((c) => c.items);
+        // 1순위: 정확히 일치
+        const exact = allItems.find((item) => normalizeMenuName(item.name) === q);
+        if (exact) return exact;
+        // 2순위: 부분 일치 (가장 길게 겹치는 것, 단 query가 item에 포함되는 것보다 item이 query에 포함되는 것 우선)
+        let best: { id: string; score: number } | null = null;
+        for (const item of allItems) {
           const n = normalizeMenuName(item.name);
-          const hit = q.includes(n) || n.includes(q);
-          if (!hit) continue;
-          const score = Math.min(n.length, q.length);
-          if (!best || score > best.score) best = { id: item.id, name: item.name, score };
+          if (n === q) continue; // 이미 위에서 처리
+          // query가 item 이름을 포함 (ex: "헤이즐넛아메리카노".includes("아메리카노"))
+          if (n.includes(q)) {
+            const score = q.length * 10; // 낮은 우선순위
+            if (!best || score > best.score) best = { id: item.id, score };
+          }
+          // item 이름이 query를 포함 (ex: "아메리카노".includes("아메리카"))
+          if (q.includes(n) && n.length > 1) {
+            const score = n.length * 20; // 높은 우선순위
+            if (!best || score > best.score) best = { id: item.id, score };
+          }
         }
         if (!best) return null;
-        return menu.flatMap((c) => c.items).find((i) => i.id === best!.id) ?? null;
+        return allItems.find((i) => i.id === best!.id) ?? null;
       };
 
       try {
