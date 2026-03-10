@@ -36,7 +36,7 @@ export default async function MenuPage() {
     <main className="container">
       <div className="page-header">
         <h1 className="page-title">카페 봄</h1>
-        <p className="page-subtitle">Spring Cafe &nbsp;&bull;&nbsp; Menu</p>
+        <p className="page-subtitle">Cafe Spring &nbsp;&bull;&nbsp; Menu</p>
       </div>
       {menu.length === 0 ? (
         <p style={{ textAlign: "center", color: "var(--muted)" }}>

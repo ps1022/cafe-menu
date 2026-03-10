@@ -73,18 +73,12 @@ a {
   text-transform: uppercase;
 }
 
-/* 카드 - 2열 그리드 */
+/* 카드 - 1열 */
 .menu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
   margin-bottom: 2rem;
-}
-
-@media (max-width: 600px) {
-  .menu-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .menu-card {
