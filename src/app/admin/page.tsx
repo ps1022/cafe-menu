@@ -156,7 +156,7 @@ function parseVoiceText(text: string): VoiceCommand {
   const t = normalizeKoreanSpeech(text);
   if (!t) return null;
 
-  const categories = ["커피", "라떼", "프라페"];
+  const categories = ["커피", "주스", "티"];
 
   // 정렬 모드 변경 (보기만): "정렬 모드 가격", "가격순", "가나다순", "수동 정렬"
   if (t.match(/^(?:정렬\s*모드\s*)?(?:수동|기본)\s*(?:정렬)?$/)) return { type: "setSort", mode: "manual" };
@@ -165,7 +165,7 @@ function parseVoiceText(text: string): VoiceCommand {
 
   // 정렬 저장: "정렬 저장", "전체 정렬 저장", "커피 정렬 저장"
   const saveSortMatch =
-    t.match(/^(?:(커피|라떼|프라페)\s+)?(?:메뉴\s+)?정렬\s+저장$/) ||
+    t.match(/^(?:(커피|주스|티)\s+)?(?:메뉴\s+)?정렬\s+저장$/) ||
     t.match(/^(?:전체|전부|모두)\s+(?:메뉴\s+)?정렬\s+저장$/);
   if (saveSortMatch) {
     const cat = (saveSortMatch[1] || "").trim();
@@ -175,7 +175,7 @@ function parseVoiceText(text: string): VoiceCommand {
 
   // 정렬 + 저장 한 번에: "커피 가격순으로 정렬 저장", "전체 가나다순 정렬 저장"
   const sortAndSaveMatch =
-    t.match(/^(?:(커피|라떼|프라페)\s+)?(?:메뉴\s+)?(가격순|가격|가나다순|가나다|이름순|이름)\s*(?:으로)?\s*정렬\s+저장$/) ||
+    t.match(/^(?:(커피|주스|티)\s+)?(?:메뉴\s+)?(가격순|가격|가나다순|가나다|이름순|이름)\s*(?:으로)?\s*정렬\s+저장$/) ||
     t.match(/^(?:전체|전부|모두)\s+(?:메뉴\s+)?(가격순|가격|가나다순|가나다|이름순|이름)\s*(?:으로)?\s*정렬\s+저장$/);
   if (sortAndSaveMatch) {
     const maybeCat = (sortAndSaveMatch[1] || "").trim();
@@ -224,9 +224,9 @@ function parseVoiceText(text: string): VoiceCommand {
   // - "커피 전부 5로 변경"
   // - "전체 메뉴 4.5로 변경" / "메뉴 전부 4500원으로 변경"
   const bulkMatch =
-    t.match(/^(?:(커피|라떼|프라페)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+(\S+)\s*(?:변경|바꿔|바꾸|수정)$/) ||
-    t.match(/^(?:(커피|라떼|프라페)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+(\S+)\s*(?:으로|로)\s*(?:변경|바꿔|바꾸|수정)$/) ||
-    t.match(/^(?:(커피|라떼|프라페)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+가격\s+(\S+)\s*(?:변경|바꿔|바꾸|수정)$/);
+    t.match(/^(?:(커피|주스|티)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+(\S+)\s*(?:변경|바꿔|바꾸|수정)$/) ||
+    t.match(/^(?:(커피|주스|티)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+(\S+)\s*(?:으로|로)\s*(?:변경|바꿔|바꾸|수정)$/) ||
+    t.match(/^(?:(커피|주스|티)\s+)?(?:메뉴\s+)?(?:전부|모두|전체)\s+가격\s+(\S+)\s*(?:변경|바꿔|바꾸|수정)$/);
   if (bulkMatch) {
     const category = (bulkMatch[1] || "").trim();
     const priceRaw = (bulkMatch[2] || bulkMatch[4] || "").trim();
@@ -315,7 +315,6 @@ export default function AdminPage() {
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("manual");
-  const [addForm, setAddForm] = useState({ categoryId: "", name: "", price: "", hasIce: false });
   const listeningRef = useRef(false);
   useEffect(() => {
     listeningRef.current = listening;
@@ -704,44 +703,6 @@ export default function AdminPage() {
       });
   }, [lastTranscript, runCommand, menu, showMsg]);
 
-  const handleManualAdd = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      const { categoryId, name, price, hasIce } = addForm;
-      if (!categoryId || !name.trim() || !price) return;
-      const parsedPrice = parseFloat(price);
-      if (isNaN(parsedPrice)) return;
-      const cat = menu.find((c) => c.id === categoryId);
-      if (!cat) return;
-      const maxOrder = Math.max(0, ...cat.items.map((i) => i.sort_order));
-      const supabase = createClient();
-      const { error } = await supabase.from("menu_items").insert({
-        category_id: categoryId,
-        name: name.trim(),
-        price: parsedPrice,
-        has_ice: hasIce,
-        sort_order: maxOrder + 1,
-      });
-      if (error) { showMsg("error", `추가 실패: ${error.message}`); return; }
-      showMsg("ok", `'${name.trim()}' 추가됨`);
-      setAddForm((f) => ({ ...f, name: "", price: "", hasIce: false }));
-      await fetchMenu();
-    },
-    [addForm, menu, fetchMenu, showMsg]
-  );
-
-  const handleManualDelete = useCallback(
-    async (itemId: string, itemName: string) => {
-      if (!confirm(`'${itemName}'을(를) 삭제할까요?`)) return;
-      const supabase = createClient();
-      const { error } = await supabase.from("menu_items").delete().eq("id", itemId);
-      if (error) { showMsg("error", `삭제 실패: ${error.message}`); return; }
-      showMsg("ok", `'${itemName}' 삭제됨`);
-      await fetchMenu();
-    },
-    [fetchMenu, showMsg]
-  );
-
   const toggleListening = () => {
     if (!recognition) return;
     if (listening) {
@@ -813,119 +774,32 @@ export default function AdminPage() {
         </p>
       )}
 
-      {/* ── 메뉴 직접 추가 ── */}
-      <form
-        onSubmit={handleManualAdd}
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-          alignItems: "center",
-          background: "var(--card-bg, #fff)",
-          border: "1px solid var(--border, #e0d8d0)",
-          borderRadius: "8px",
-          padding: "0.85rem 1rem",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <strong style={{ fontSize: "0.9rem", marginRight: "0.25rem" }}>＋ 메뉴 추가</strong>
-        <select
-          value={addForm.categoryId}
-          onChange={(e) => setAddForm((f) => ({ ...f, categoryId: e.target.value }))}
-          required
-          style={{ padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border, #e0d8d0)", fontSize: "0.9rem" }}
-        >
-          <option value="">카테고리</option>
-          {menu.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder="메뉴 이름"
-          value={addForm.name}
-          onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
-          required
-          style={{ padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border, #e0d8d0)", fontSize: "0.9rem", minWidth: "110px" }}
-        />
-        <input
-          type="number"
-          placeholder="가격 (천원)"
-          value={addForm.price}
-          onChange={(e) => setAddForm((f) => ({ ...f, price: e.target.value }))}
-          required
-          step="0.1"
-          min="0"
-          style={{ padding: "0.35rem 0.5rem", borderRadius: "4px", border: "1px solid var(--border, #e0d8d0)", fontSize: "0.9rem", width: "110px" }}
-        />
-        <label style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.9rem", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={addForm.hasIce}
-            onChange={(e) => setAddForm((f) => ({ ...f, hasIce: e.target.checked }))}
-          />
-          아이스
-        </label>
-        <button
-          type="submit"
-          style={{ padding: "0.35rem 0.9rem", borderRadius: "4px", border: "none", background: "var(--accent)", color: "#fff", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem" }}
-        >
-          추가
-        </button>
-      </form>
-
       {/* ── 메뉴 목록 (2열, 가격순) ── */}
       <div className="menu-grid">
         {menu.map((category) => {
-          const sortedByOrder = [...category.items].sort((a, b) => a.sort_order - b.sort_order);
           const displayItems = [...category.items].sort(
             (a, b) => Number(a.price) - Number(b.price) || a.name.localeCompare(b.name, "ko-KR")
           );
           return (
             <section key={category.id} className="menu-card">
               <h2 className="category-title">{category.name}</h2>
-              <ul className="menu-list" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              <ul className="menu-list">
                 {displayItems.map((item) => {
-                  const orderIdx = sortedByOrder.findIndex((i) => i.id === item.id);
                   return (
-                    <li key={item.id} className="menu-item" style={{ flexDirection: "column", alignItems: "stretch", gap: "0.25rem" }}>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <span className="menu-item-name" style={{ flex: 1 }}>{item.name}</span>
-                        <span className="menu-item-dots" />
-                        <span className="menu-item-price">
-                          {item.has_ice ? (
-                            <>
-                              <span className="price-hot">H {formatPrice(Number(item.price))}</span>
-                              <span className="price-sep"> / </span>
-                              <span className="price-ice">I {formatPrice(Number(item.price) + 0.5)}</span>
-                            </>
-                          ) : (
-                            formatPrice(Number(item.price))
-                          )}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.25rem", justifyContent: "flex-end" }}>
-                        <button
-                          type="button"
-                          onClick={() => moveItem(category.id, item.id, -1)}
-                          disabled={orderIdx === 0}
-                          style={{ padding: "0.1rem 0.45rem", fontSize: "0.75rem", borderRadius: "3px", border: "1px solid var(--border, #e0d8d0)", background: "transparent", cursor: orderIdx === 0 ? "default" : "pointer", opacity: orderIdx === 0 ? 0.3 : 1 }}
-                          title="위로"
-                        >↑</button>
-                        <button
-                          type="button"
-                          onClick={() => moveItem(category.id, item.id, 1)}
-                          disabled={orderIdx === sortedByOrder.length - 1}
-                          style={{ padding: "0.1rem 0.45rem", fontSize: "0.75rem", borderRadius: "3px", border: "1px solid var(--border, #e0d8d0)", background: "transparent", cursor: orderIdx === sortedByOrder.length - 1 ? "default" : "pointer", opacity: orderIdx === sortedByOrder.length - 1 ? 0.3 : 1 }}
-                          title="아래로"
-                        >↓</button>
-                        <button
-                          type="button"
-                          onClick={() => handleManualDelete(item.id, item.name)}
-                          style={{ padding: "0.1rem 0.45rem", fontSize: "0.75rem", borderRadius: "3px", border: "1px solid #fca5a5", background: "transparent", color: "#c62828", cursor: "pointer" }}
-                          title="삭제"
-                        >✕</button>
-                      </div>
+                    <li key={item.id} className="menu-item">
+                      <span className="menu-item-name">{item.name}</span>
+                      <span className="menu-item-dots" />
+                      <span className="menu-item-price">
+                        {item.has_ice ? (
+                          <>
+                            <span className="price-hot">H {formatPrice(Number(item.price))}</span>
+                            <span className="price-sep"> / </span>
+                            <span className="price-ice">I {formatPrice(Number(item.price) + 0.5)}</span>
+                          </>
+                        ) : (
+                          formatPrice(Number(item.price))
+                        )}
+                      </span>
                     </li>
                   );
                 })}
