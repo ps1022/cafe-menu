@@ -29,6 +29,18 @@ function formatPrice(price: number) {
   return `${price.toFixed(1)}천`;
 }
 
+const CATEGORY_EN: Record<string, string> = {
+  커피: "COFFEE",
+  라떼: "LATTE",
+  프라페: "FRAPPE",
+  주스: "JUICE",
+  티: "TEA",
+};
+
+function categoryLabel(name: string) {
+  return CATEGORY_EN[name] ?? name.toUpperCase();
+}
+
 export default async function MenuPage() {
   const menu = await getMenu();
 
@@ -46,7 +58,7 @@ export default async function MenuPage() {
         <div className="menu-grid">
           {menu.map((category) => (
             <section key={category.id} className="menu-card">
-              <h2 className="category-title">{category.name}</h2>
+              <h2 className="category-title">{categoryLabel(category.name)}</h2>
               <ul className="menu-list">
                 {category.items.map((item) => (
                   <li key={item.id} className="menu-item">
