@@ -676,7 +676,8 @@ export default function AdminPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        const cmd: VoiceCommand = data.cmd ?? null;
+        // Gemini 실패 시 로컬 정규식 파서로 폴백
+        const cmd: VoiceCommand = data.cmd ?? parseVoiceText(transcript);
         if (cmd) {
           if (cmd.type === "delete") setLastParsed(`삭제: ${cmd.name}`);
           if (cmd.type === "price") setLastParsed(`가격변경: ${cmd.name} → ${cmd.price}`);
@@ -694,12 +695,19 @@ export default function AdminPage() {
           runCommand(cmd);
         } else {
           setLastParsed(`해석 실패: "${transcript}"`);
-          showMsg("error", data.message || "명령을 이해하지 못했어요.");
+          showMsg("error", "명령을 이해하지 못했어요.");
         }
       })
       .catch(() => {
-        setLastParsed("AI 연결 오류");
-        showMsg("error", "AI 서버에 연결할 수 없어요.");
+        // 네트워크 오류 시에도 로컬 파서 시도
+        const cmd = parseVoiceText(transcript);
+        if (cmd) {
+          setLastParsed(`로컬 해석: "${transcript}"`);
+          runCommand(cmd);
+        } else {
+          setLastParsed("해석 실패");
+          showMsg("error", "명령을 이해하지 못했어요.");
+        }
       });
   }, [lastTranscript, runCommand, menu, showMsg]);
 
