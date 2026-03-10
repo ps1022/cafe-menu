@@ -22,6 +22,7 @@ type VoiceCommand =
   | { type: "sortAndSave"; mode: Exclude<SortMode, "manual">; scope: "all" | "category"; category?: string }
   | { type: "move"; name: string; direction: -1 | 1; steps: number }
   | { type: "deleteCategory"; category: string }
+  | { type: "setTag"; name: string; tag: "베스트" | "시그니처" | null }
   | null;
 
 function normalizeKoreanSpeech(text: string) {
@@ -257,6 +258,29 @@ function parseVoiceText(text: string, liveCategories?: string[]): VoiceCommand {
       t.match(new RegExp(`^${cat}\\s+카테고리\\s*(?:전체|전부|모두)?\\s*(?:삭제|지워|제거)(?:줘|주세요|해줘|해)?$`)) ||
       t.match(new RegExp(`^${cat}\\s+(?:전체|전부|모두)\\s*(?:삭제|지워|제거)(?:줘|주세요|해줘|해)?$`));
     if (catDeleteMatch) return { type: "deleteCategory", category: cat };
+  }
+
+  // 태그 설정: "아메리카노 베스트 태그", "아메리카노 시그니처", "아메리카노 태그 없애"
+  const tagBestMatch =
+    t.match(/^(.+?)\s+베스트\s*(?:태그)?(?:로|으로)?\s*(?:바꿔|변경|설정|붙여|추가)?(?:줘|주세요|해줘|해)?$/) ||
+    t.match(/^베스트\s+(.+?)$/);
+  if (tagBestMatch) {
+    const name = tagBestMatch[1].trim();
+    if (name) return { type: "setTag", name, tag: "베스트" };
+  }
+  const tagSigMatch =
+    t.match(/^(.+?)\s+시그니처\s*(?:태그)?(?:로|으로)?\s*(?:바꿔|변경|설정|붙여|추가)?(?:줘|주세요|해줘|해)?$/) ||
+    t.match(/^시그니처\s+(.+?)$/);
+  if (tagSigMatch) {
+    const name = tagSigMatch[1].trim();
+    if (name) return { type: "setTag", name, tag: "시그니처" };
+  }
+  const tagRemoveMatch =
+    t.match(/^(.+?)\s+태그\s*(?:없애|빼|지워|삭제|제거)(?:줘|주세요|해줘|해)?$/) ||
+    t.match(/^(.+?)\s+(?:베스트|시그니처)\s*태그\s*(?:없애|빼|지워|삭제|제거)(?:줘|주세요|해줘|해)?$/);
+  if (tagRemoveMatch) {
+    const name = tagRemoveMatch[1].trim();
+    if (name) return { type: "setTag", name, tag: null };
   }
 
   // 삭제: "에스프레소 삭제", "삭제 에스프레소", "에스프레소 지워줘"
@@ -700,6 +724,16 @@ export default function AdminPage() {
           if (catErr) throw catErr;
           showMsg("ok", `'${cat.name}' 카테고리 전체 삭제됨`);
           await fetchMenu();
+        } else if (cmd.type === "setTag") {
+          const item = findBestItem(cmd.name);
+          if (!item) {
+            showMsg("error", `'${cmd.name}' 메뉴를 찾을 수 없습니다.`);
+            return;
+          }
+          const { error } = await supabase.from("menu_items").update({ tag: cmd.tag }).eq("id", item.id);
+          if (error) throw error;
+          showMsg("ok", cmd.tag ? `'${item.name}' 태그: ${cmd.tag === "베스트" ? "BEST" : "SIGNATURE"}` : `'${item.name}' 태그 제거됨`);
+          await fetchMenu();
         }
       } catch (e) {
         showMsg("error", e instanceof Error ? e.message : "오류 발생");
@@ -791,7 +825,9 @@ export default function AdminPage() {
         가격변경 : [상품명] [가격] &quot;변경&quot;<br />
         상품추가 : [카테고리명] [상품명] [가격] &quot;추가&quot;<br />
         상품삭제 : [상품명] &quot;삭제&quot;<br />
-        카테고리삭제 : [카테고리명] 카테고리 &quot;삭제&quot;
+        카테고리삭제 : [카테고리명] 카테고리 &quot;삭제&quot;<br />
+        태그설정 : [상품명] &quot;베스트&quot; 또는 &quot;시그니처&quot;<br />
+        태그제거 : [상품명] 태그 &quot;없애&quot;
       </p>
       <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
         <button
