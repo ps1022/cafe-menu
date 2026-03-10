@@ -21,6 +21,7 @@ type VoiceCommand =
   | { type: "saveSort"; scope: "all" | "category"; category?: string }
   | { type: "sortAndSave"; mode: Exclude<SortMode, "manual">; scope: "all" | "category"; category?: string }
   | { type: "move"; name: string; direction: -1 | 1; steps: number }
+  | { type: "deleteCategory"; category: string }
   | null;
 
 function normalizeKoreanSpeech(text: string) {
@@ -28,6 +29,8 @@ function normalizeKoreanSpeech(text: string) {
     .trim()
     .replace(/\s+/g, " ")
     .replace(/[.?!…]/g, "")
+    // 음성 인식이 "티"를 영문 T로 잘못 받아쓰는 경우 보정
+    .replace(/\bT\b/g, "티")
     .replace(/원/g, "")
     // "40으로", "4.5로", "사천원으로" 같은 케이스에서 (으)로 제거
     .replace(/(\d)\s*(?:으로|로)\b/g, "$1 ")
@@ -246,6 +249,14 @@ function parseVoiceText(text: string, liveCategories?: string[]): VoiceCommand {
     const to = renameMatch[2].trim();
     const maybePrice = parsePriceKrwToThousands(to);
     if (maybePrice === null && from && to) return { type: "rename", from, to };
+  }
+
+  // 카테고리 전체 삭제: "티 카테고리 삭제", "티 전체 삭제", "커피 카테고리 전부 삭제"
+  for (const cat of categories) {
+    const catDeleteMatch =
+      t.match(new RegExp(`^${cat}\\s+카테고리\\s*(?:전체|전부|모두)?\\s*(?:삭제|지워|제거)(?:줘|주세요|해줘|해)?$`)) ||
+      t.match(new RegExp(`^${cat}\\s+(?:전체|전부|모두)\\s*(?:삭제|지워|제거)(?:줘|주세요|해줘|해)?$`));
+    if (catDeleteMatch) return { type: "deleteCategory", category: cat };
   }
 
   // 삭제: "에스프레소 삭제", "삭제 에스프레소", "에스프레소 지워줘"
@@ -661,6 +672,20 @@ export default function AdminPage() {
           await fetchMenu();
         } else if (cmd.type === "addNoPrice") {
           showMsg("error", `가격이 빠졌어요. 예: '추가 ${cmd.category} ${cmd.name} 4.0' 또는 '${cmd.category} ${cmd.name} 4천원 추가'`);
+        } else if (cmd.type === "deleteCategory") {
+          const cat = menu.find((c) => c.name === cmd.category);
+          if (!cat) {
+            showMsg("error", `'${cmd.category}' 카테고리를 찾을 수 없습니다.`);
+            return;
+          }
+          if (cat.items.length > 0) {
+            const { error: itemErr } = await supabase.from("menu_items").delete().eq("category_id", cat.id);
+            if (itemErr) throw itemErr;
+          }
+          const { error: catErr } = await supabase.from("categories").delete().eq("id", cat.id);
+          if (catErr) throw catErr;
+          showMsg("ok", `'${cat.name}' 카테고리 전체 삭제됨`);
+          await fetchMenu();
         }
       } catch (e) {
         showMsg("error", e instanceof Error ? e.message : "오류 발생");
@@ -751,7 +776,8 @@ export default function AdminPage() {
         <strong>명령어 예시</strong><br />
         가격변경 : [상품명] [가격] &quot;변경&quot;<br />
         상품추가 : [카테고리명] [상품명] [가격] &quot;추가&quot;<br />
-        상품삭제 : [상품명] &quot;삭제&quot;
+        상품삭제 : [상품명] &quot;삭제&quot;<br />
+        카테고리삭제 : [카테고리명] 카테고리 &quot;삭제&quot;
       </p>
       <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
         <button
