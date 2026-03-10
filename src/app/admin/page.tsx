@@ -636,34 +636,46 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!lastTranscript) return;
-    const transcripts = lastTranscript.split(/[.!?]/).map(s => s.trim()).filter(s => s);
-    let parsedAny = false;
-    for (const t of transcripts) {
-      const cmd = parseVoiceText(t);
-      if (cmd) {
-        if (cmd.type === "delete") setLastParsed(`삭제: ${cmd.name}`);
-        if (cmd.type === "price") setLastParsed(`가격변경: ${cmd.name} → ${cmd.price}`);
-        if (cmd.type === "add") setLastParsed(`추가: [${cmd.category}] ${cmd.name} ${cmd.price}`);
-        if (cmd.type === "addNoPrice") setLastParsed(`추가(가격 필요): [${cmd.category}] ${cmd.name}`);
-        if (cmd.type === "rename") setLastParsed(`이름변경: ${cmd.from} → ${cmd.to}`);
-        if (cmd.type === "bulkPrice") {
-          if (cmd.scope === "all") setLastParsed(`일괄 가격변경: 전체 → ${cmd.price}`);
-          else setLastParsed(`일괄 가격변경: ${cmd.category} → ${cmd.price}`);
-        }
-        if (cmd.type === "setSort") setLastParsed(`정렬 모드: ${cmd.mode}`);
-        if (cmd.type === "saveSort") setLastParsed(`정렬 저장: ${cmd.scope === "all" ? "전체" : cmd.category}`);
-        if (cmd.type === "sortAndSave") setLastParsed(`정렬+저장: ${cmd.scope === "all" ? "전체" : cmd.category} (${cmd.mode})`);
-        if (cmd.type === "move") setLastParsed(`이동: ${cmd.name} ${cmd.direction === -1 ? "위로" : "아래로"} ${cmd.steps}칸`);
-        runCommand(cmd);
-        parsedAny = true;
-      }
-    }
-    if (!parsedAny) {
-      setLastParsed(`해석 실패: ${normalizeKoreanSpeech(lastTranscript)}`);
-      showMsg("error", "명령을 이해하지 못했어요. 예: '에스프레소 삭제', '가격 카페라떼 4.5', '추가 커피 디카페인 4.0'");
-    }
+    const transcript = lastTranscript;
     setLastTranscript("");
-  }, [lastTranscript, runCommand]);
+    setLastParsed("AI 해석 중...");
+
+    fetch("/api/voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: transcript,
+        menuContext: menu.map((c) => ({ name: c.name, items: c.items.map((i) => i.name) })),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const cmd: VoiceCommand = data.cmd ?? null;
+        if (cmd) {
+          if (cmd.type === "delete") setLastParsed(`삭제: ${cmd.name}`);
+          if (cmd.type === "price") setLastParsed(`가격변경: ${cmd.name} → ${cmd.price}`);
+          if (cmd.type === "add") setLastParsed(`추가: [${cmd.category}] ${cmd.name} ${cmd.price}`);
+          if (cmd.type === "addNoPrice") setLastParsed(`추가(가격 필요): [${cmd.category}] ${cmd.name}`);
+          if (cmd.type === "rename") setLastParsed(`이름변경: ${cmd.from} → ${cmd.to}`);
+          if (cmd.type === "bulkPrice") {
+            if (cmd.scope === "all") setLastParsed(`일괄 가격변경: 전체 → ${cmd.price}`);
+            else setLastParsed(`일괄 가격변경: ${cmd.category} → ${cmd.price}`);
+          }
+          if (cmd.type === "setSort") setLastParsed(`정렬 모드: ${cmd.mode}`);
+          if (cmd.type === "saveSort") setLastParsed(`정렬 저장: ${cmd.scope === "all" ? "전체" : cmd.category}`);
+          if (cmd.type === "sortAndSave") setLastParsed(`정렬+저장: ${cmd.scope === "all" ? "전체" : cmd.category} (${cmd.mode})`);
+          if (cmd.type === "move") setLastParsed(`이동: ${cmd.name} ${cmd.direction === -1 ? "위로" : "아래로"} ${cmd.steps}칸`);
+          runCommand(cmd);
+        } else {
+          setLastParsed(`해석 실패: "${transcript}"`);
+          showMsg("error", data.message || "명령을 이해하지 못했어요.");
+        }
+      })
+      .catch(() => {
+        setLastParsed("AI 연결 오류");
+        showMsg("error", "AI 서버에 연결할 수 없어요.");
+      });
+  }, [lastTranscript, runCommand, menu, showMsg]);
 
   const toggleListening = () => {
     if (!recognition) return;
@@ -689,7 +701,7 @@ export default function AdminPage() {
     <main className="container">
       <h1 className="page-title">관리자 (음성)</h1>
       <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.9rem", marginBottom: "1rem" }}>
-        음성 예: &quot;에스프레소 삭제&quot;, &quot;바닐라라떼 40으로 변경&quot;, &quot;추가 커피 디카페인 4.0&quot;, &quot;바닐라라떼를 아인슈페너로 변경&quot;, &quot;커피 메뉴 전부 5로 변경&quot;
+        자연스럽게 말씀해 주세요. 예: &quot;아메리카노 지워줘&quot;, &quot;바닐라라떼 4500원으로 바꿔줘&quot;, &quot;커피 메뉴에 디카페인 추가해줘 4천원&quot;
       </p>
       <div style={{ textAlign: "center", marginBottom: "1rem" }}>
         <button
