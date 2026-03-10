@@ -151,12 +151,12 @@ function formatPrice(price: number) {
   return `${price.toFixed(1)}천`;
 }
 
-function parseVoiceText(text: string): VoiceCommand {
+function parseVoiceText(text: string, liveCategories?: string[]): VoiceCommand {
   const raw = text.trim().replace(/\s+/g, " ");
   const t = normalizeKoreanSpeech(text);
   if (!t) return null;
 
-  const categories = ["커피", "주스", "티"];
+  const categories = liveCategories?.length ? liveCategories : ["커피", "주스", "티"];
 
   // 정렬 모드 변경 (보기만): "정렬 모드 가격", "가격순", "가나다순", "수동 정렬"
   if (t.match(/^(?:정렬\s*모드\s*)?(?:수동|기본)\s*(?:정렬)?$/)) return { type: "setSort", mode: "manual" };
@@ -677,7 +677,8 @@ export default function AdminPage() {
       .then((res) => res.json())
       .then((data) => {
         // Gemini 실패 시 로컬 정규식 파서로 폴백
-        const cmd: VoiceCommand = data.cmd ?? parseVoiceText(transcript);
+        const liveCategories = menu.map((c) => c.name);
+        const cmd: VoiceCommand = data.cmd ?? parseVoiceText(transcript, liveCategories);
         if (cmd) {
           if (cmd.type === "delete") setLastParsed(`삭제: ${cmd.name}`);
           if (cmd.type === "price") setLastParsed(`가격변경: ${cmd.name} → ${cmd.price}`);
@@ -700,7 +701,8 @@ export default function AdminPage() {
       })
       .catch(() => {
         // 네트워크 오류 시에도 로컬 파서 시도
-        const cmd = parseVoiceText(transcript);
+        const liveCategories = menu.map((c) => c.name);
+        const cmd = parseVoiceText(transcript, liveCategories);
         if (cmd) {
           setLastParsed(`로컬 해석: "${transcript}"`);
           runCommand(cmd);
