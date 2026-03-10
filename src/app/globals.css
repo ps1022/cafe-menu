@@ -120,7 +120,7 @@ a {
 .menu-item {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   padding: 0.9rem 0;
   gap: 0;
 }
