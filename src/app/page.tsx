@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import type { CategoryWithItems } from "@/types/menu";
 
+export const dynamic = "force-dynamic";
+
 async function getMenu(): Promise<CategoryWithItems[]> {
   const supabase = createClient();
   const { data: categories } = await supabase
