@@ -747,8 +747,11 @@ export default function AdminPage() {
       <h1 className="page-title">관리자</h1>
 
       {/* ── 음성 제어 ── */}
-      <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.9rem", marginBottom: "0.75rem" }}>
-        자연스럽게 말씀해 주세요.&nbsp; 예: &quot;아메리카노 지워줘&quot;, &quot;바닐라라떼 4500원으로 바꿔줘&quot;
+      <p style={{ textAlign: "center", color: "var(--muted)", fontSize: "0.85rem", lineHeight: "1.8", marginBottom: "0.75rem" }}>
+        <strong>명령어 예시</strong><br />
+        가격변경 : [상품명] [가격] &quot;변경&quot;<br />
+        상품추가 : [카테고리명] [상품명] [가격] &quot;추가&quot;<br />
+        상품삭제 : [상품명] &quot;삭제&quot;
       </p>
       <div style={{ textAlign: "center", marginBottom: "0.75rem" }}>
         <button
