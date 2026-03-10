@@ -135,6 +135,7 @@ a {
   width: 5.2rem;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   padding-right: 0.5rem;
 }
 
