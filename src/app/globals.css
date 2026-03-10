@@ -116,7 +116,6 @@ a {
   justify-content: space-between;
   align-items: baseline;
   padding: 0.9rem 0;
-  border-bottom: 1px solid var(--border);
   gap: 1rem;
 }
 

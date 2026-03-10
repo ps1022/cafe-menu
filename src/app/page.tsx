@@ -29,7 +29,7 @@ export default async function MenuPage() {
   return (
     <main className="container">
       <div className="page-header">
-        <h1 className="page-title">봄날의 카페</h1>
+        <h1 className="page-title">카페 봄</h1>
         <p className="page-subtitle">Spring Cafe &nbsp;&bull;&nbsp; Menu</p>
       </div>
       {menu.length === 0 ? (
