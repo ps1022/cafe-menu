@@ -39,9 +39,10 @@ function findItem(items: typeof INITIAL_ITEMS, name: string) {
 
 export default function LandingPage() {
   const [items, setItems] = useState(INITIAL_ITEMS);
-  const [input, setInput] = useState("");
   const [log, setLog] = useState<{ msg: string; ok: boolean }[]>([]);
   const [listening, setListening] = useState(false);
+  const [flashId, setFlashId] = useState<number | null>(null);
+  const [flashType, setFlashType] = useState<string>("");
   const recogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playgroundRef = useRef<HTMLDivElement>(null);
 
@@ -49,26 +50,30 @@ export default function LandingPage() {
     setLog((prev) => [{ msg, ok }, ...prev].slice(0, 5));
   }
 
+  const FLASH_COLORS: Record<string, string> = {
+    soldOut: "rgba(255,80,80,0.22)",
+    restore: "rgba(110,231,183,0.28)",
+    priceUp: "rgba(255,209,102,0.3)",
+    priceDown: "rgba(130,196,255,0.28)",
+  };
+
   function handleCommand(text: string) {
     const cmd = parseCommand(text);
     if (!cmd) { addLog(`"${text}" — 인식하지 못했어요.`, false); return; }
+    const targetItem = cmd.name ? findItem(items, cmd.name) : null;
+    if (!targetItem) { addLog(`"${cmd.name}" 항목을 찾을 수 없어요.`, false); return; }
     setItems((prev) => {
       const next = prev.map((item) => ({ ...item }));
-      const target = cmd.name ? findItem(next, cmd.name) : null;
-      if (!target) { addLog(`"${cmd.name}" 항목을 찾을 수 없어요.`, false); return prev; }
+      const target = next.find(i => i.id === targetItem.id)!;
       if (cmd.type === "soldOut") { target.soldOut = true; addLog(`✓ ${target.name} 품절 처리됐어요.`, true); }
       else if (cmd.type === "restore") { target.soldOut = false; addLog(`✓ ${target.name} 품절 해제됐어요.`, true); }
       else if (cmd.type === "priceUp" && cmd.delta) { target.price += cmd.delta; addLog(`✓ ${target.name} ${cmd.delta.toLocaleString()}원 인상됐어요.`, true); }
       else if (cmd.type === "priceDown" && cmd.delta) { target.price = Math.max(0, target.price - cmd.delta); addLog(`✓ ${target.name} ${cmd.delta.toLocaleString()}원 인하됐어요.`, true); }
       return next;
     });
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    handleCommand(input);
-    setInput("");
+    setFlashId(targetItem.id);
+    setFlashType(cmd.type);
+    setTimeout(() => setFlashId(null), 700);
   }
 
   function handleMic() {
@@ -78,7 +83,7 @@ export default function LandingPage() {
     const recog = new SpeechRecognition();
     recog.lang = "ko-KR";
     recog.interimResults = false;
-    recog.onresult = (e: any) => { const text = e.results[0][0].transcript; setInput(text); handleCommand(text); setListening(false); };
+    recog.onresult = (e: any) => { const text = e.results[0][0].transcript; handleCommand(text); setListening(false); };
     recog.onerror = () => setListening(false);
     recog.onend = () => setListening(false);
     recogRef.current = recog;
@@ -212,7 +217,7 @@ export default function LandingPage() {
       <section ref={playgroundRef} style={{ padding: "80px 24px", background: "#F9F8F6" }}>
         <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
           <h2 style={{ fontSize: "clamp(1.5rem,3vw,2rem)", fontWeight: 700, textAlign: "center", marginBottom: "10px", color: "#1B3C35" }}>지금 바로 체험해보세요</h2>
-          <p style={{ textAlign: "center", marginBottom: "48px", color: "#888", fontSize: "0.9rem" }}>오른쪽 어드민에서 명령하면 왼쪽 메뉴판이 실시간으로 바뀝니다</p>
+          <p style={{ textAlign: "center", marginBottom: "48px", color: "#888", fontSize: "0.9rem" }}>오른쪽 어드민에서 마이크를 누르고 말해보세요! 왼쪽 메뉴판이 실시간으로 바뀝니다</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", alignItems: "start" }}>
             {/* 고객 메뉴판 */}
             <div style={{ borderRadius: "24px", overflow: "hidden", border: "1px solid #e8e4de", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
@@ -222,7 +227,7 @@ export default function LandingPage() {
               </div>
               <div style={{ padding: "16px", background: "#fff" }}>
                 {items.map((item) => (
-                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderRadius: "12px", marginBottom: "6px", background: item.soldOut ? "#f5f5f5" : "#F9F8F6", opacity: item.soldOut ? 0.55 : 1, transition: "all 0.4s ease" }}>
+                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderRadius: "12px", marginBottom: "6px", background: flashId === item.id ? FLASH_COLORS[flashType] ?? "#F9F8F6" : item.soldOut ? "#f5f5f5" : "#F9F8F6", opacity: item.soldOut ? 0.55 : 1, transition: "all 0.4s ease", boxShadow: flashId === item.id ? `0 0 0 2px ${FLASH_COLORS[flashType]?.replace("0.2", "0.6") ?? "transparent"}` : "none" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ fontWeight: 500, fontSize: "13px", color: item.soldOut ? "#aaa" : "#1B3C35", textDecoration: item.soldOut ? "line-through" : "none" }}>{item.name}</span>
                       {item.tag && !item.soldOut && (
@@ -239,48 +244,63 @@ export default function LandingPage() {
             </div>
 
             {/* 어드민 콘솔 */}
-            <div style={{ borderRadius: "24px", padding: "28px", background: "#1a2420", border: "1px solid #2a3d38" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                <span style={{ width: "8px", height: "8px", borderRadius: "9999px", background: listening ? "#FF8C42" : "#3d5a54", display: "inline-block" }} />
-                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", color: "#7aab9e" }}>ADMIN CONSOLE</p>
+            <div style={{ borderRadius: "24px", padding: "28px", background: "#1a2420", border: "1px solid #2a3d38", display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* 헤더 */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "9999px", background: listening ? "#FF8C42" : "#3d5a54", display: "inline-block", transition: "background 0.2s" }} />
+                  <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.2em", color: "#7aab9e" }}>ADMIN CONSOLE</p>
+                </div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "#e8f5f0", marginTop: "6px", lineHeight: 1.6, wordBreak: "keep-all" }}>아래와 같이 말로 편하게 메뉴판과 포스 등록 내용을 바꿔요!<br /><span style={{ fontSize: "11px", fontWeight: 400, color: "#7aab9e" }}>메뉴판에 있는 모든 메뉴 이름으로 명령하실 수 있습니다.</span></p>
               </div>
-              <p style={{ fontSize: "11px", marginBottom: "20px", color: listening ? "#FF8C42" : "#4a7a6e" }}>
-                {listening ? "🎙 듣고 있어요..." : "명령어를 입력하거나 마이크를 사용하세요"}
-              </p>
-              {/* 로그 */}
-              <div style={{ minHeight: "120px", marginBottom: "16px" }}>
-                {log.length === 0 ? (
-                  <p style={{ fontSize: "11px", fontStyle: "italic", color: "#3a5a54" }}>아직 명령이 없어요. 아래에서 시도해보세요.</p>
-                ) : (
-                  log.map((l, i) => (
-                    <div key={i} style={{ fontSize: "11px", padding: "8px 12px", borderRadius: "10px", marginBottom: "6px", background: l.ok ? "rgba(122,171,158,0.15)" : "rgba(255,100,100,0.1)", color: l.ok ? "#7aab9e" : "#ff8080" }}>{l.msg}</div>
-                  ))
-                )}
+
+              {/* 예시 명령 카드들 */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.15em", color: "rgba(122,171,158,0.6)", marginBottom: "4px" }}>💬 이렇게 말해보세요</p>
+                {[
+                  { text: "\"아메리카노 품절\"", sub: "메뉴를 즉시 품절 처리", color: "#ff8080" },
+                  { text: "\"아메리카노 품절 해제\"", sub: "품절 메뉴를 다시 판매", color: "#7aab9e" },
+                  { text: "\"카페라떼 500원 올려줘\"", sub: "가격을 바로 인상", color: "#FFD166" },
+                  { text: "\"콜드브루 1000원 내려줘\"", sub: "가격을 바로 인하", color: "#82c4ff" },
+                ].map(({ text, sub, color }) => (
+                  <div key={text} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "12px", background: "rgba(255,255,255,0.04)", border: `1px solid ${color}33` }}>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color, fontFamily: "monospace", flex: 1 }}>{text}</span>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", whiteSpace: "nowrap" }}>{sub}</span>
+                  </div>
+                ))}
               </div>
-              {/* 입력 */}
-              <form onSubmit={handleSubmit} style={{ display: "flex", gap: "8px" }}>
-                <input value={input} onChange={(e) => setInput(e.target.value)} placeholder='예: "아메리카노 품절"' style={{ flex: 1, padding: "12px 18px", fontSize: "13px", outline: "none", background: "#0f1a17", border: "1px solid #2a3d38", borderRadius: "24px", color: "#e8f5f0", fontFamily: "inherit" }} />
-                <button type="button" onClick={handleMic} title="음성 입력" style={{ width: "46px", height: "46px", borderRadius: "9999px", border: "none", cursor: "pointer", background: listening ? "#FF8C42" : "#2a3d38", fontSize: "18px", flexShrink: 0, boxShadow: listening ? "0 0 16px rgba(255,140,66,0.5)" : "none", transition: "all 0.2s" }}>🎙</button>
-                <button type="submit" style={{ padding: "0 20px", height: "46px", fontSize: "13px", fontWeight: 600, background: "#1B3C35", color: "#F9F8F6", border: "none", borderRadius: "24px", cursor: "pointer", flexShrink: 0, fontFamily: "inherit" }}>실행</button>
-              </form>
-              {/* 예시 칩 */}
-              <div style={{ marginTop: "16px" }}>
-                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.15em", color: "rgba(249,248,246,0.35)", marginBottom: "10px" }}>
-                  💡 클릭해서 바로 체험
+
+              {/* 마이크 버튼 */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "8px 0" }}>
+                <button
+                  type="button"
+                  onClick={handleMic}
+                  title="음성 입력"
+                  style={{
+                    width: "80px", height: "80px", borderRadius: "9999px", border: "none", cursor: "pointer",
+                    background: listening ? "#FF8C42" : "#2a4a42",
+                    fontSize: "32px", flexShrink: 0,
+                    boxShadow: listening ? "0 0 0 8px rgba(255,140,66,0.2), 0 0 32px rgba(255,140,66,0.4)" : "0 4px 20px rgba(0,0,0,0.3)",
+                    transition: "all 0.2s",
+                    transform: listening ? "scale(1.05)" : "scale(1)",
+                  }}
+                >🎙</button>
+                <p style={{ fontSize: "12px", fontWeight: 600, color: listening ? "#FF8C42" : "#5a8a7e", transition: "color 0.2s", textAlign: "center" }}>
+                  {listening ? "듣고 있어요... 말씀해주세요" : "탭해서 음성 명령 시작"}
                 </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {[
-                    { label: "아메리카노 품절", color: "#ff8080" },
-                    { label: "카페라떼 500원 올려줘", color: "#FFD166" },
-                    { label: "아메리카노 품절 해제", color: "#7aab9e" },
-                    { label: "콜드브루 1000원 내려줘", color: "#82c4ff" },
-                  ].map(({ label, color }) => (
-                    <button key={label} onClick={() => handleCommand(label)}
-                      style={{ fontSize: "12px", fontWeight: 600, padding: "8px 16px", borderRadius: "9999px", background: "rgba(255,255,255,0.07)", color, border: `1px solid ${color}55`, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = `${color}22`; e.currentTarget.style.transform = "scale(1.04)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "scale(1)"; }}
-                    >{label}</button>
-                  ))}
+              </div>
+
+              {/* 실행 내역 */}
+              <div style={{ borderTop: "1px solid #2a3d38", paddingTop: "16px" }}>
+                <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.15em", color: "rgba(122,171,158,0.5)", marginBottom: "10px" }}>실행 내역</p>
+                <div style={{ minHeight: "60px" }}>
+                  {log.length === 0 ? (
+                    <p style={{ fontSize: "11px", fontStyle: "italic", color: "#3a5a54" }}>아직 실행된 명령이 없어요.</p>
+                  ) : (
+                    log.map((l, i) => (
+                      <div key={i} style={{ fontSize: "11px", padding: "8px 12px", borderRadius: "10px", marginBottom: "6px", background: l.ok ? "rgba(122,171,158,0.15)" : "rgba(255,100,100,0.1)", color: l.ok ? "#7aab9e" : "#ff8080" }}>{l.msg}</div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
